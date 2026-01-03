@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { Ticket, TicketStatus } from "@/types/project";
 import { KanbanColumn } from "./KanbanColumn";
 
@@ -11,23 +13,37 @@ const columns: { id: TicketStatus; title: string; colorClass: string }[] = [
 interface KanbanBoardProps {
   tickets: Ticket[];
   onTicketClick: (ticket: Ticket) => void;
+  onTicketMove?: (ticketId: string, newStatus: TicketStatus) => void;
 }
 
-export function KanbanBoard({ tickets, onTicketClick }: KanbanBoardProps) {
+export function KanbanBoard({ tickets, onTicketClick, onTicketMove }: KanbanBoardProps) {
   const getTicketsByStatus = (status: TicketStatus) =>
     tickets.filter((ticket) => ticket.status === status);
 
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    const newStatus = destination.droppableId as TicketStatus;
+    onTicketMove?.(draggableId, newStatus);
+  };
+
   return (
-    <div className="flex h-full gap-4 p-6 overflow-x-auto">
-      {columns.map((column) => (
-        <KanbanColumn
-          key={column.id}
-          title={column.title}
-          colorClass={column.colorClass}
-          tickets={getTicketsByStatus(column.id)}
-          onTicketClick={onTicketClick}
-        />
-      ))}
-    </div>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="flex h-full gap-4 p-6 overflow-x-auto">
+        {columns.map((column) => (
+          <KanbanColumn
+            key={column.id}
+            id={column.id}
+            title={column.title}
+            colorClass={column.colorClass}
+            tickets={getTicketsByStatus(column.id)}
+            onTicketClick={onTicketClick}
+          />
+        ))}
+      </div>
+    </DragDropContext>
   );
 }

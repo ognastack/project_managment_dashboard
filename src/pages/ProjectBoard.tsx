@@ -6,13 +6,22 @@ import { Button } from "@/components/ui/button";
 import { KanbanBoard } from "@/components/board/KanbanBoard";
 import { TicketDetailsModal } from "@/components/board/TicketDetailsModal";
 import { mockProjects } from "@/data/mockData";
-import { Ticket } from "@/types/project";
+import { Ticket, TicketStatus } from "@/types/project";
 
 export default function ProjectBoard() {
   const { projectId } = useParams<{ projectId: string }>();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-
+  
   const project = mockProjects.find((p) => p.id === projectId) || mockProjects[0];
+  const [tickets, setTickets] = useState<Ticket[]>(project.tickets);
+
+  const handleTicketMove = (ticketId: string, newStatus: TicketStatus) => {
+    setTickets((prev) =>
+      prev.map((ticket) =>
+        ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket
+      )
+    );
+  };
 
   return (
     <DashboardLayout>
@@ -30,7 +39,7 @@ export default function ProjectBoard() {
                 {project.name}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {project.tickets.length} tickets
+                {tickets.length} tickets
               </p>
             </div>
           </div>
@@ -48,8 +57,9 @@ export default function ProjectBoard() {
         {/* Kanban Board */}
         <div className="flex-1 overflow-hidden">
           <KanbanBoard
-            tickets={project.tickets}
+            tickets={tickets}
             onTicketClick={setSelectedTicket}
+            onTicketMove={handleTicketMove}
           />
         </div>
 

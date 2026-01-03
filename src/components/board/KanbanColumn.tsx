@@ -1,9 +1,11 @@
 import { Plus } from "lucide-react";
+import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { Ticket } from "@/types/project";
 import { TicketCard } from "./TicketCard";
 import { Button } from "@/components/ui/button";
 
 interface KanbanColumnProps {
+  id: string;
   title: string;
   colorClass: string;
   tickets: Ticket[];
@@ -11,6 +13,7 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({
+  id,
   title,
   colorClass,
   tickets,
@@ -33,25 +36,41 @@ export function KanbanColumn({
       </div>
 
       {/* Column Content */}
-      <div
-        className={`flex-1 rounded-lg p-2 space-y-2 overflow-y-auto ${colorClass}`}
-      >
-        {tickets.length === 0 ? (
-          <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
-            No tickets
+      <Droppable droppableId={id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`flex-1 rounded-lg p-2 space-y-2 overflow-y-auto transition-colors ${colorClass} ${
+              snapshot.isDraggingOver ? "ring-2 ring-primary/50" : ""
+            }`}
+          >
+            {tickets.length === 0 && !snapshot.isDraggingOver ? (
+              <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
+                No tickets
+              </div>
+            ) : (
+              tickets.map((ticket, index) => (
+                <Draggable key={ticket.id} draggableId={ticket.id} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={`transition-transform ${
+                        snapshot.isDragging ? "rotate-2 scale-105" : ""
+                      }`}
+                    >
+                      <TicketCard ticket={ticket} onClick={() => onTicketClick(ticket)} />
+                    </div>
+                  )}
+                </Draggable>
+              ))
+            )}
+            {provided.placeholder}
           </div>
-        ) : (
-          tickets.map((ticket, index) => (
-            <div
-              key={ticket.id}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <TicketCard ticket={ticket} onClick={() => onTicketClick(ticket)} />
-            </div>
-          ))
         )}
-      </div>
+      </Droppable>
     </div>
   );
 }
