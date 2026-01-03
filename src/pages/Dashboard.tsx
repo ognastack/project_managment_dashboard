@@ -1,16 +1,26 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, FolderKanban, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateProjectModal } from "@/components/project/CreateProjectModal";
 import { mockProjects, mockTickets } from "@/data/mockData";
+import type { Project } from "@/types/project";
 
 export default function Dashboard() {
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
   const stats = {
     total: mockTickets.length,
     inProgress: mockTickets.filter((t) => t.status === "in_progress").length,
     completed: mockTickets.filter((t) => t.status === "done").length,
     urgent: mockTickets.filter((t) => t.priority === "urgent").length,
+  };
+
+  const handleCreateProject = (newProject: Project) => {
+    setProjects((prev) => [...prev, newProject]);
   };
 
   return (
@@ -24,7 +34,7 @@ export default function Dashboard() {
               Welcome back! Here's an overview of your projects.
             </p>
           </div>
-          <Button variant="hero" size="sm">
+          <Button variant="hero" size="sm" onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="h-4 w-4" />
             New Project
           </Button>
@@ -91,7 +101,7 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockProjects.map((project) => (
+            {projects.map((project) => (
               <Link key={project.id} to={`/projects/${project.id}`}>
                 <Card className="shadow-card hover:shadow-card-hover transition-all cursor-pointer group">
                   <CardHeader>
@@ -121,6 +131,12 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <CreateProjectModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onCreateProject={handleCreateProject}
+      />
     </DashboardLayout>
   );
 }

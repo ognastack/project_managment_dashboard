@@ -1,12 +1,22 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, FolderKanban, Search } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateProjectModal } from "@/components/project/CreateProjectModal";
 import { mockProjects } from "@/data/mockData";
+import type { Project } from "@/types/project";
 
 export default function Projects() {
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const handleCreateProject = (newProject: Project) => {
+    setProjects((prev) => [...prev, newProject]);
+  };
+
   return (
     <DashboardLayout>
       <div className="p-8">
@@ -18,7 +28,7 @@ export default function Projects() {
               Manage and organize your team's projects
             </p>
           </div>
-          <Button variant="hero" size="sm">
+          <Button variant="hero" size="sm" onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="h-4 w-4" />
             New Project
           </Button>
@@ -35,7 +45,7 @@ export default function Projects() {
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockProjects.map((project) => (
+          {projects.map((project) => (
             <Link key={project.id} to={`/projects/${project.id}`}>
               <Card className="shadow-card hover:shadow-card-hover transition-all cursor-pointer group h-full">
                 <CardHeader>
@@ -72,7 +82,10 @@ export default function Projects() {
           ))}
 
           {/* Empty state / Add new */}
-          <Card className="shadow-card border-dashed hover:border-primary/50 transition-colors cursor-pointer group h-full flex items-center justify-center min-h-[200px]">
+          <Card 
+            className="shadow-card border-dashed hover:border-primary/50 transition-colors cursor-pointer group h-full flex items-center justify-center min-h-[200px]"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
             <CardContent className="flex flex-col items-center justify-center py-8">
               <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors mb-4">
                 <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -84,6 +97,12 @@ export default function Projects() {
           </Card>
         </div>
       </div>
+
+      <CreateProjectModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onCreateProject={handleCreateProject}
+      />
     </DashboardLayout>
   );
 }
