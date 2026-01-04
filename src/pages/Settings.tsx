@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { User, Bell, Shield, Palette } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,12 +14,18 @@ import { toast } from "sonner";
 
 export default function Settings() {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const handleAvatarChange = (newAvatarUrl: string | null) => {
     setAvatarUrl(newAvatarUrl);
     toast.success(newAvatarUrl ? "Avatar updated" : "Avatar removed");
+  };
+
+  const handleThemeChange = (checked: boolean) => {
+    setTheme(checked ? "dark" : "light");
+    toast.success(`Theme changed to ${checked ? "dark" : "light"} mode`);
   };
 
   return (
@@ -192,7 +199,10 @@ export default function Settings() {
                     Switch between light and dark themes
                   </p>
                 </div>
-                <Switch />
+                <Switch 
+                  checked={theme === "dark"}
+                  onCheckedChange={handleThemeChange}
+                />
               </div>
             </CardContent>
           </Card>
