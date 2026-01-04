@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { User, Bell, Shield, Palette } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { ChangeAvatarModal } from "@/components/settings/ChangeAvatarModal";
+import { toast } from "sonner";
 
 export default function Settings() {
   const { user } = useAuth();
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  const handleAvatarChange = (newAvatarUrl: string | null) => {
+    setAvatarUrl(newAvatarUrl);
+    toast.success(newAvatarUrl ? "Avatar updated" : "Avatar removed");
+  };
 
   return (
     <DashboardLayout>
@@ -36,12 +46,20 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xl font-semibold text-primary">
-                    {user?.email?.[0]?.toUpperCase() || "U"}
-                  </span>
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="User avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xl font-semibold text-primary">
+                      {user?.email?.[0]?.toUpperCase() || "U"}
+                    </span>
+                  )}
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setIsAvatarModalOpen(true)}>
                   Change avatar
                 </Button>
               </div>
@@ -180,6 +198,13 @@ export default function Settings() {
           </Card>
         </div>
       </div>
+
+      <ChangeAvatarModal
+        open={isAvatarModalOpen}
+        onOpenChange={setIsAvatarModalOpen}
+        currentInitial={user?.email?.[0]?.toUpperCase() || "U"}
+        onAvatarChange={handleAvatarChange}
+      />
     </DashboardLayout>
   );
 }
