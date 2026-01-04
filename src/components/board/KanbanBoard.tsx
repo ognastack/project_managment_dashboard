@@ -14,9 +14,10 @@ interface KanbanBoardProps {
   tickets: Ticket[];
   onTicketClick: (ticket: Ticket) => void;
   onTicketMove?: (ticketId: string, newStatus: TicketStatus) => void;
+  onAddTicket?: (status: TicketStatus) => void;
 }
 
-export function KanbanBoard({ tickets, onTicketClick, onTicketMove }: KanbanBoardProps) {
+export function KanbanBoard({ tickets, onTicketClick, onTicketMove, onAddTicket }: KanbanBoardProps) {
   const getTicketsByStatus = (status: TicketStatus) =>
     tickets.filter((ticket) => ticket.status === status);
 
@@ -41,6 +42,7 @@ export function KanbanBoard({ tickets, onTicketClick, onTicketMove }: KanbanBoar
             colorClass={column.colorClass}
             tickets={getTicketsByStatus(column.id)}
             onTicketClick={onTicketClick}
+            onAddTicket={(status) => onAddTicket?.(status as TicketStatus)}
           />
         ))}
       </div>
