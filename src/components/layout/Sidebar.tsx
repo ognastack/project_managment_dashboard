@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CreateWorkspaceModal } from "@/components/workspace/CreateWorkspaceModal";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -25,7 +27,7 @@ const navItems = [
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
-const workspaces = [
+const initialWorkspaces = [
   { id: "1", name: "My Workspace", initial: "M" },
   { id: "2", name: "Acme Corp", initial: "A" },
   { id: "3", name: "Startup Inc", initial: "S" },
@@ -39,6 +41,9 @@ export function Sidebar({ className }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { auth, user } = useAuth();
+  const [workspaces, setWorkspaces] = useState(initialWorkspaces);
+  const [currentWorkspace, setCurrentWorkspace] = useState(initialWorkspaces[0]);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -48,6 +53,17 @@ export function Sidebar({ className }: SidebarProps) {
     } catch (error) {
       toast.error("Failed to logout");
     }
+  };
+
+  const handleCreateWorkspace = (workspace: { id: string; name: string; initial: string }) => {
+    setWorkspaces([...workspaces, workspace]);
+    setCurrentWorkspace(workspace);
+    toast.success(`Workspace "${workspace.name}" created`);
+  };
+
+  const handleSelectWorkspace = (workspace: { id: string; name: string; initial: string }) => {
+    setCurrentWorkspace(workspace);
+    toast.success(`Switched to "${workspace.name}"`);
   };
 
   return (
@@ -79,10 +95,10 @@ export function Sidebar({ className }: SidebarProps) {
             >
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground">
-                  M
+                  {currentWorkspace.initial}
                 </div>
                 <span className="text-sm font-medium truncate">
-                  My Workspace
+                  {currentWorkspace.name}
                 </span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +106,11 @@ export function Sidebar({ className }: SidebarProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             {workspaces.map((workspace) => (
-              <DropdownMenuItem key={workspace.id} className="cursor-pointer">
+              <DropdownMenuItem 
+                key={workspace.id} 
+                className="cursor-pointer"
+                onClick={() => handleSelectWorkspace(workspace)}
+              >
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground">
                     {workspace.initial}
@@ -99,7 +119,10 @@ export function Sidebar({ className }: SidebarProps) {
                 </div>
               </DropdownMenuItem>
             ))}
-            <DropdownMenuItem className="cursor-pointer text-muted-foreground">
+            <DropdownMenuItem 
+              className="cursor-pointer text-muted-foreground"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create workspace
             </DropdownMenuItem>
@@ -151,6 +174,12 @@ export function Sidebar({ className }: SidebarProps) {
           </Button>
         </div>
       </div>
+
+      <CreateWorkspaceModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onCreateWorkspace={handleCreateWorkspace}
+      />
     </aside>
   );
 }
