@@ -10,6 +10,7 @@ interface KanbanColumnProps {
   colorClass: string;
   tickets: Ticket[];
   onTicketClick: (ticket: Ticket) => void;
+  onAddTicket: (status: string) => void;
 }
 
 export function KanbanColumn({
@@ -18,6 +19,7 @@ export function KanbanColumn({
   colorClass,
   tickets,
   onTicketClick,
+  onAddTicket,
 }: KanbanColumnProps) {
   return (
     <div className="flex flex-col flex-shrink-0 w-80">
@@ -30,7 +32,7 @@ export function KanbanColumn({
             {tickets.length}
           </span>
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6">
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onAddTicket(id)}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>

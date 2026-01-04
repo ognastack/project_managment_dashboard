@@ -13,6 +13,7 @@ export default function ProjectBoard() {
   const { projectId } = useParams<{ projectId: string }>();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [defaultTicketStatus, setDefaultTicketStatus] = useState<TicketStatus>("backlog");
   
   const project = mockProjects.find((p) => p.id === projectId) || mockProjects[0];
   const [tickets, setTickets] = useState<Ticket[]>(project.tickets);
@@ -46,6 +47,11 @@ export default function ProjectBoard() {
     setTickets((prev) => [...prev, newTicket]);
   };
 
+  const handleAddTicketFromColumn = (status: TicketStatus) => {
+    setDefaultTicketStatus(status);
+    setIsCreateModalOpen(true);
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-full">
@@ -77,12 +83,12 @@ export default function ProjectBoard() {
           </div>
         </div>
 
-        {/* Kanban Board */}
         <div className="flex-1 overflow-hidden">
           <KanbanBoard
             tickets={tickets}
             onTicketClick={setSelectedTicket}
             onTicketMove={handleTicketMove}
+            onAddTicket={handleAddTicketFromColumn}
           />
         </div>
 
@@ -97,6 +103,7 @@ export default function ProjectBoard() {
           open={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSubmit={handleCreateTicket}
+          defaultStatus={defaultTicketStatus}
         />
       </div>
     </DashboardLayout>
