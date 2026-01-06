@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, FolderKanban, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -6,18 +6,59 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectModal } from "@/components/project/CreateProjectModal";
 import { mockProjects, mockTickets } from "@/data/mockData";
-import type { Project } from "@/types/project";
+import type { PaginatedProjectsResponse, Project } from "@/types/project";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWorkProject } from "@/contexts/WorkProjectContext";
+import { toast } from "sonner";
+
+type DashboardStats ={
+    total: number,
+    inProgress: number,
+  }
 
 export default function Dashboard() {
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const { client } = useAuth();
+  const {workspace} = useWorkProject()  
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [stats,setStats] = useState<DashboardStats>({
+      total: 0,
+      inProgress: 0,
+  })
 
-  const stats = {
-    total: mockTickets.length,
-    inProgress: mockTickets.filter((t) => t.status === "in_progress").length,
-    completed: mockTickets.filter((t) => t.status === "done").length,
-    urgent: mockTickets.filter((t) => t.priority === "urgent").length,
-  };
+
+  const fetchProjects = useCallback(async () => {
+    if (!client) return;
+
+    try {
+      const response = await client.get<PaginatedProjectsResponse>(`/v1/projects`);
+      if(response.data){
+
+        const prs=response.data.projects
+        
+        const newStats:DashboardStats={
+            total: 0,
+            inProgress: 0,
+        }
+        prs.forEach((pr)=>{
+          newStats.total += pr.task_count
+          newStats.inProgress += pr.open_task_count
+        })
+
+        setStats(newStats)
+        setProjects(prs)
+
+      }else{
+        toast.error(response.error.msg || 'Error fetching workspaces')
+      }
+    } catch (error) {
+      console.error("Failed to fetch workspaces", error);
+    }
+  }, [client]);
+  
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);    
 
   const handleCreateProject = (newProject: Project) => {
     setProjects((prev) => [...prev, newProject]);
@@ -65,30 +106,6 @@ export default function Dashboard() {
               <p className="text-2xl font-bold text-foreground">{stats.inProgress}</p>
             </CardContent>
           </Card>
-
-          <Card className="shadow-card hover:shadow-card-hover transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Completed
-              </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-status-low" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-foreground">{stats.completed}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card hover:shadow-card-hover transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Urgent
-              </CardTitle>
-              <AlertCircle className="h-4 w-4 text-status-urgent" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-foreground">{stats.urgent}</p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Projects List */}
@@ -119,9 +136,9 @@ export default function Dashboard() {
                       {project.description}
                     </p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>{project.tickets.length} tickets</span>
+                      <span>{project.task_count} tickets</span>
                       <span>
-                        {project.tickets.filter((t) => t.status === "done").length} completed
+                        {project.open_task_count} completed
                       </span>
                     </div>
                   </CardContent>

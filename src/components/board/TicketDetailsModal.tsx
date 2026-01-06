@@ -1,5 +1,5 @@
 import { X, MessageSquare, Paperclip, User, Calendar, Flag } from "lucide-react";
-import { Ticket, TicketPriority, TicketStatus } from "@/types/project";
+import { Task, TicketPriority, TicketStatus } from "@/types/project";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -30,7 +30,7 @@ const statusConfig: Record<TicketStatus, { label: string; className: string }> =
 };
 
 interface TicketDetailsModalProps {
-  ticket: Ticket | null;
+  ticket: Task | null;
   onClose: () => void;
 }
 
@@ -62,10 +62,10 @@ export function TicketDetailsModal({ ticket, onClose }: TicketDetailsModalProps)
               <Flag className="h-3 w-3 mr-1" />
               {priority.label}
             </Badge>
-            {ticket.assignee && (
+            {ticket.assignees && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
-                {ticket.assignee}
+                {ticket.assignees}
               </div>
             )}
           </div>
@@ -84,88 +84,7 @@ export function TicketDetailsModal({ ticket, onClose }: TicketDetailsModalProps)
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>Created {new Date(ticket.createdAt).toLocaleDateString()}</span>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Attachments */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Paperclip className="h-4 w-4" />
-              Attachments ({ticket.attachments.length})
-            </h3>
-            {ticket.attachments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No attachments</p>
-            ) : (
-              <div className="space-y-2">
-                {ticket.attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
-                      <Paperclip className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {attachment.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{attachment.size}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Comments */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Comments ({ticket.comments.length})
-            </h3>
-            {ticket.comments.length === 0 ? (
-              <p className="text-sm text-muted-foreground mb-4">No comments yet</p>
-            ) : (
-              <div className="space-y-4 mb-4">
-                {ticket.comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex-shrink-0 flex items-center justify-center">
-                      <span className="text-xs font-medium text-primary">
-                        {comment.author[0].toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-foreground">
-                          {comment.author}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(comment.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{comment.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add Comment */}
-            <div className="space-y-3">
-              <Textarea
-                placeholder="Add a comment..."
-                className="min-h-[80px] resize-none"
-              />
-              <div className="flex justify-end">
-                <Button variant="hero" size="sm">
-                  Add Comment
-                </Button>
-              </div>
+              <span>Created {new Date(ticket.created_at).toLocaleDateString()}</span>
             </div>
           </div>
         </div>

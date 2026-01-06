@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid,
@@ -8,6 +8,7 @@ import {
   LogOut,
   ChevronDown,
   Plus,
+  Eye
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CreateWorkspaceModal } from "@/components/workspace/CreateWorkspaceModal";
+import { WorkspaceListResponse,Workspace } from "@/types/workspaces";
+import { useWorkProject } from "@/contexts/WorkProjectContext";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -27,11 +30,6 @@ const navItems = [
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
-const initialWorkspaces = [
-  { id: "1", name: "My Workspace", initial: "M" },
-  { id: "2", name: "Acme Corp", initial: "A" },
-  { id: "3", name: "Startup Inc", initial: "S" },
-];
 
 interface SidebarProps {
   className?: string;
@@ -40,9 +38,9 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { auth, user } = useAuth();
-  const [workspaces, setWorkspaces] = useState(initialWorkspaces);
-  const [currentWorkspace, setCurrentWorkspace] = useState(initialWorkspaces[0]);
+  const { auth, user, client } = useAuth();
+  const {workspace,setWorkspace} = useWorkProject()
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -55,16 +53,40 @@ export function Sidebar({ className }: SidebarProps) {
     }
   };
 
-  const handleCreateWorkspace = (workspace: { id: string; name: string; initial: string }) => {
-    setWorkspaces([...workspaces, workspace]);
-    setCurrentWorkspace(workspace);
+  const fetchWorkspaces = useCallback(async () => {
+    if (!client) return;
+
+    try {
+      const response = await client.get<WorkspaceListResponse>("/v1/workspaces");
+      if(response.data){
+        const tempWork:Workspace[]= response.data.workspaces as Workspace[]; 
+        setWorkspaces(tempWork)
+        if(tempWork.length >0 && !workspace){
+          setWorkspace(tempWork[0])
+        }
+      }else{
+        toast.error(response.error.msg || 'Error fetching workspaces')
+      }
+    } catch (error) {
+      console.error("Failed to fetch workspaces", error);
+    }
+  }, [client,setWorkspace,workspace]);
+
+  const handleCreateWorkspace = async (workspace: Workspace) => {
+    await fetchWorkspaces()
+    setWorkspace(workspace);
     toast.success(`Workspace "${workspace.name}" created`);
   };
 
-  const handleSelectWorkspace = (workspace: { id: string; name: string; initial: string }) => {
-    setCurrentWorkspace(workspace);
+  const handleSelectWorkspace = (workspace: Workspace) => {
+    setWorkspace(workspace);
     toast.success(`Switched to "${workspace.name}"`);
   };
+
+
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
 
   return (
     <aside
@@ -88,6 +110,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Workspace Selector */}
       <div className="p-3">
         <DropdownMenu>
+          {workspace ?(
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -95,15 +118,33 @@ export function Sidebar({ className }: SidebarProps) {
             >
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground">
-                  {currentWorkspace.initial}
+                  <Eye className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <span className="text-sm font-medium truncate">
-                  {currentWorkspace.name}
+                  {workspace.name}
                 </span>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
+          ):(
+            <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-between h-10 px-3 hover:bg-sidebar-accent"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground">
+                  OG
+                </div>
+                <span className="text-sm font-medium truncate">
+                  WorkSpaces
+                </span>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </Button>
+            </DropdownMenuTrigger>
+          )}
           <DropdownMenuContent align="start" className="w-56">
             {workspaces.map((workspace) => (
               <DropdownMenuItem 
@@ -113,7 +154,7 @@ export function Sidebar({ className }: SidebarProps) {
               >
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground">
-                    {workspace.initial}
+                    {workspace.name.slice(0,2).toUpperCase()}
                   </div>
                   <span>{workspace.name}</span>
                 </div>

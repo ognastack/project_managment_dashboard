@@ -16,29 +16,58 @@ export interface Attachment {
   type: string;
 }
 
-export interface Ticket {
+export interface Task {
   id: string;
+  project_id: string;
+
   title: string;
   description: string;
-  status: TicketStatus;
-  priority: TicketPriority;
-  assignee?: string;
-  comments: Comment[];
-  attachments: Attachment[];
-  createdAt: string;
-  updatedAt: string;
+
+  status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
+
+  due_date: string | null;
+
+  task_number: number;
+
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+
+  assignees: string[];
 }
 
-export interface Project {
+export interface TasksListResponse {
+  tasks: Task[];
+}
+
+
+export type Project = {
   id: string;
+  workspace_id: string;
+
   name: string;
   description: string;
-  tickets: Ticket[];
-  createdAt: string;
-}
+  key: string;
 
-export interface Workspace {
-  id: string;
-  name: string;
+  color: string | null;
+
+  is_archived: boolean;
+
+  created_at: string;
+  updated_at: string;
+
+  task_count: number | null;
+  open_task_count: number | null;
+};
+
+export type PaginatedProjectsResponse = {
   projects: Project[];
-}
+
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+};
+
+

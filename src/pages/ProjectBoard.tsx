@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Plus, ArrowLeft, MoreHorizontal } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -7,44 +7,70 @@ import { KanbanBoard } from "@/components/board/KanbanBoard";
 import { TicketDetailsModal } from "@/components/board/TicketDetailsModal";
 import { CreateTicketModal } from "@/components/board/CreateTicketModal";
 import { mockProjects } from "@/data/mockData";
-import { Ticket, TicketStatus, TicketPriority } from "@/types/project";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Task, TicketStatus, TicketPriority,TasksListResponse } from "@/types/project";
+import { title } from "process";
 
 export default function ProjectBoard() {
   const { projectId } = useParams<{ projectId: string }>();
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+
+  const { client } = useAuth();
+  const [selectedTicket, setSelectedTicket] = useState<Task | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [defaultTicketStatus, setDefaultTicketStatus] = useState<TicketStatus>("backlog");
   
   const project = mockProjects.find((p) => p.id === projectId) || mockProjects[0];
-  const [tickets, setTickets] = useState<Ticket[]>(project.tickets);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const handleTicketMove = (ticketId: string, newStatus: TicketStatus) => {
-    setTickets((prev) =>
-      prev.map((ticket) =>
-        ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket
-      )
-    );
+    
   };
 
-  const handleCreateTicket = (data: {
+  const fatchTasks = useCallback(async () => {
+    if (!client) return;
+
+    if(projectId){
+    try {
+      const response = await client.get<TasksListResponse>(`/v1/tasks?project_id=${projectId}`);
+      if(response.data){
+        setTasks(response.data.tasks)
+      }else{
+        toast.error(response.error.msg || 'Error fetching workspaces')
+      }
+    } catch (error) {
+      console.error("Failed to fetch workspaces", error);
+    }
+    }else{
+      toast.error('Please select a project')
+    }
+
+  }, [client,projectId]);
+  
+  useEffect(() => {
+    fatchTasks();
+  }, [fatchTasks]);   
+
+  const handleCreateTicket = async (data: {
     title: string;
     description: string;
     status: TicketStatus;
     priority: TicketPriority;
   }) => {
-    const newTicket: Ticket = {
-      id: `ticket-${Date.now()}`,
-      title: data.title,
-      description: data.description,
-      status: data.status,
-      priority: data.priority,
-      assignee: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      comments: [],
-      attachments: [],
-    };
-    setTickets((prev) => [...prev, newTicket]);
+    const response = await client.post('/v1/tasks',{
+            project_id: projectId,
+            title: data.title,
+            description: data.description,
+            status: data.status,
+            priority: data.priority,
+        })
+    
+    if(response.data){
+      console.log(response.data)
+    }else(
+      toast.error(response.error.msg || 'SOmethign went wrong creating task')
+    )
+
   };
 
   const handleAddTicketFromColumn = (status: TicketStatus) => {
@@ -68,7 +94,7 @@ export default function ProjectBoard() {
                 {project.name}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {tickets.length} tickets
+                tickets
               </p>
             </div>
           </div>
@@ -85,7 +111,7 @@ export default function ProjectBoard() {
 
         <div className="flex-1 overflow-hidden">
           <KanbanBoard
-            tickets={tickets}
+            tickets={tasks}
             onTicketClick={setSelectedTicket}
             onTicketMove={handleTicketMove}
             onAddTicket={handleAddTicketFromColumn}
