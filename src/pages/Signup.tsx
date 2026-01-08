@@ -13,13 +13,7 @@ import { toast } from "sonner";
 const signUpFormSchema = z
   .object({
     username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .max(50, "Username must be less than 50 characters")
-      .regex(
-        /^[a-zA-Z0-9_]+$/,
-        "Username can only contain letters, numbers, and underscores"
-      ),
+      .string().email(),
     password: z
       .string()
       .min(6, "Password must be at least 6 characters")
@@ -90,7 +84,7 @@ export default function Signup() {
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
-                type="text"
+                type="email"
                 placeholder="Choose a username"
                 {...register("username")}
                 className="h-11"

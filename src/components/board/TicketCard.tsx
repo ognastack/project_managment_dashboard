@@ -1,5 +1,5 @@
 import { MessageSquare, Paperclip, User } from "lucide-react";
-import { Ticket, TicketPriority } from "@/types/project";
+import { Task, TicketPriority } from "@/types/project";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ const priorityConfig: Record<
 };
 
 interface TicketCardProps {
-  ticket: Ticket;
+  ticket: Task;
   onClick: () => void;
 }
 
@@ -36,7 +36,7 @@ export function TicketCard({ ticket, onClick }: TicketCardProps) {
         >
           {priority.label}
         </span>
-        <span className="text-xs text-muted-foreground">{ticket.id}</span>
+        <span className="text-xs text-muted-foreground">{ticket.task_number}</span>
       </div>
 
       {/* Title */}
@@ -46,24 +46,14 @@ export function TicketCard({ ticket, onClick }: TicketCardProps) {
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          {ticket.comments.length > 0 && (
-            <div className="flex items-center gap-1 text-xs">
-              <MessageSquare className="h-3 w-3" />
-              {ticket.comments.length}
-            </div>
-          )}
-          {ticket.attachments.length > 0 && (
-            <div className="flex items-center gap-1 text-xs">
-              <Paperclip className="h-3 w-3" />
-              {ticket.attachments.length}
-            </div>
-          )}
-        </div>
 
-        {ticket.assignee && (
-          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-            <User className="h-3 w-3 text-primary" />
+        {ticket.assignees && (
+          <div className="flex flex-col gap-2">
+            {ticket.assignees.map((as)=>[
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-3 w-3 text-primary" />
+              </div>
+            ])}
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
-import { Ticket } from "@/types/project";
+import { Task } from "@/types/project";
 import { TicketCard } from "./TicketCard";
 import { Button } from "@/components/ui/button";
 
@@ -8,8 +8,8 @@ interface KanbanColumnProps {
   id: string;
   title: string;
   colorClass: string;
-  tickets: Ticket[];
-  onTicketClick: (ticket: Ticket) => void;
+  tickets: Task[];
+  onTicketClick: (ticket: Task) => void;
   onAddTicket: (status: string) => void;
 }
 

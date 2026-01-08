@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { Ticket, TicketStatus } from "@/types/project";
+import { Task, TicketStatus } from "@/types/project";
 import { KanbanColumn } from "./KanbanColumn";
 
 const columns: { id: TicketStatus; title: string; colorClass: string }[] = [
@@ -11,8 +11,8 @@ const columns: { id: TicketStatus; title: string; colorClass: string }[] = [
 ];
 
 interface KanbanBoardProps {
-  tickets: Ticket[];
-  onTicketClick: (ticket: Ticket) => void;
+  tickets: Task[];
+  onTicketClick: (ticket: Task) => void;
   onTicketMove?: (ticketId: string, newStatus: TicketStatus) => void;
   onAddTicket?: (status: TicketStatus) => void;
 }

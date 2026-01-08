@@ -1,4 +1,4 @@
-import { useState } from "react";
+
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Workspace } from "@/types/workspaces";
 
 const workspaceSchema = z.object({
   name: z.string().min(1, "Workspace name is required").max(50, "Name must be less than 50 characters"),
@@ -31,14 +34,26 @@ type WorkspaceFormData = z.infer<typeof workspaceSchema>;
 interface CreateWorkspaceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateWorkspace: (workspace: { id: string; name: string; initial: string }) => void;
+  onCreateWorkspace: (workspace: Workspace) => void;
 }
+
+const toSlug = (value: string, maxLength = 9) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")                 // remove accents
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")      // replace invalid chars with hyphen
+    .replace(/^-+|-+$/g, "")          // trim hyphens
+    .slice(0, maxLength);
 
 export function CreateWorkspaceModal({
   open,
   onOpenChange,
   onCreateWorkspace,
 }: CreateWorkspaceModalProps) {
+
+  const {client} = useAuth();
+
   const form = useForm<WorkspaceFormData>({
     resolver: zodResolver(workspaceSchema),
     defaultValues: {
@@ -46,15 +61,22 @@ export function CreateWorkspaceModal({
     },
   });
 
-  const onSubmit = (data: WorkspaceFormData) => {
-    const newWorkspace = {
-      id: crypto.randomUUID(),
-      name: data.name,
-      initial: data.name.charAt(0).toUpperCase(),
-    };
-    onCreateWorkspace(newWorkspace);
-    form.reset();
-    onOpenChange(false);
+  const onSubmit = async (data: WorkspaceFormData) =>  {
+
+    const response = await client.post('/v1/workspaces',{
+      name:data.name,
+      slug:toSlug(data.name)
+    })
+
+    if(response.error){
+      toast.error(response.error.msg || 'Somethign went wrong');
+    }else{
+      const newWorkspace:Workspace = response.data as Workspace
+      toast.success("WorkSpace created succesfully");
+      onCreateWorkspace(newWorkspace);
+      form.reset();
+      onOpenChange(false);
+    }
   };
 
   return (

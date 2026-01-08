@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Plus, FolderKanban, Search } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -6,16 +6,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectModal } from "@/components/project/CreateProjectModal";
-import { mockProjects } from "@/data/mockData";
-import type { Project } from "@/types/project";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { useWorkProject } from "@/contexts/WorkProjectContext";
+
+import type { Project,PaginatedProjectsResponse } from "@/types/project";
 
 export default function Projects() {
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const { client } = useAuth();
+  const {workspace} = useWorkProject()
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleCreateProject = (newProject: Project) => {
     setProjects((prev) => [...prev, newProject]);
   };
+
+  const fetchProjects = useCallback(async () => {
+    if (!client) return;
+
+    try {
+      const response = await client.get<PaginatedProjectsResponse>(`/v1/projects?workspace_id=${workspace.id}`);
+      if(response.data){
+        setProjects(response.data.projects)
+      }else{
+        toast.error(response.error.msg || 'Error fetching workspaces')
+      }
+    } catch (error) {
+      console.error("Failed to fetch workspaces", error);
+    }
+  }, [client,workspace]);
+  
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);  
 
   return (
     <DashboardLayout>
@@ -66,13 +90,13 @@ export default function Projects() {
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-primary" />
                       <span className="text-muted-foreground">
-                        {project.tickets.length} tickets
+                        {project.task_count}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-status-low" />
                       <span className="text-muted-foreground">
-                        {project.tickets.filter((t) => t.status === "done").length} done
+                        {project.open_task_count}
                       </span>
                     </div>
                   </div>
