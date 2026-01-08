@@ -23,9 +23,6 @@ export default function ProjectBoard() {
   const project = mockProjects.find((p) => p.id === projectId) || mockProjects[0];
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  const handleTicketMove = (ticketId: string, newStatus: TicketStatus) => {
-    
-  };
 
   const fatchTasks = useCallback(async () => {
     if (!client) return;
@@ -46,7 +43,19 @@ export default function ProjectBoard() {
     }
 
   }, [client,projectId]);
-  
+
+  const handleTicketMove = async (ticketId: string, newStatus: TicketStatus) => {
+
+    const response= await client.patch(`/v1/tasks/${ticketId}/status`,{status:newStatus})
+
+    if(response.error){
+      toast.error(response.error.msg || 'Somethign went wrong updating status')
+    }else{
+      fatchTasks()
+    }
+    
+  };
+
   useEffect(() => {
     fatchTasks();
   }, [fatchTasks]);   
@@ -58,15 +67,16 @@ export default function ProjectBoard() {
     priority: TicketPriority;
   }) => {
     const response = await client.post('/v1/tasks',{
-            project_id: projectId,
-            title: data.title,
-            description: data.description,
-            status: data.status,
-            priority: data.priority,
-        })
-    
+      project_id: projectId,
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      priority: data.priority,
+    })
+
     if(response.data){
-      console.log(response.data)
+      toast.info('Ticket was created')
+      fatchTasks()
     }else(
       toast.error(response.error.msg || 'SOmethign went wrong creating task')
     )
